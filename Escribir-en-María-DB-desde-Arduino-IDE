@@ -1,0 +1,90 @@
+
+
+#ifdef ESP32
+#include <WiFi.h>
+#include <HTTPClient.h>
+#else
+
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
+#endif
+
+// Replace with your network credentials
+// Reemplazar con credenciales del WiFi
+const char* ssid     = "NOMBRE_DE_TU_RED";
+const char* password = "TU_CONTRASEÑA_RED_WIFI";
+
+//Conexión
+const char* serverName = "http://huecat.es/es/index.php";
+
+String claveApi = "3422343243216";
+String dispositivo = "DISPOSITIVO_1";
+String location = "MADRID, ESPAÑA";
+
+
+void setup() {
+
+  Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  Serial.println("Conectando"); //Connecting
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to WiFi network with IP Address: ");
+  Serial.println(WiFi.localIP());
+
+}
+
+
+WiFiStatus=0; //-1 desactivado, 0 desconectado, 1 conectado
+void loop() {
+
+  static unsigned long timerSolicitarRequest;
+  if (millis() > timerSolicitarRequest + 5000) {
+    solicitarRequest();
+    timerSolicitarRequest = millis();
+  }
+
+}
+
+void solicitarRequest() {
+
+  //comprobar el estado de la conexión
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
+    HTTPClient http;
+
+    http.begin(client, serverName);    // Your Domain name with URL path or IP address with path
+
+    // Especificar el header con el tipo de contenido
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    int valor1 = 1; int valor2 = 2; int valor3 = 3;
+
+    // String del PEDIDO: POST HTTP
+    String httpRequestData = "api=" + claveApi + "&device=" + dispositivo + "&location=" + location + "&valor1=" + String(valor1) + "&valor2=" + String(valor2) + "&valor3=" + String(valor3) + "";
+
+    Serial.print("httpRequestData: ");
+    Serial.println(httpRequestData);
+
+    // Envía PEDIDO: POST HTTP
+    int httpResponseCode = http.POST(httpRequestData);
+
+    // If you need an HTTP request with a content type: text/plain
+    //http.addHeader("Content-Type", "text/plain");
+    //int httpResponseCode = http.POST("Hello, World!");
+
+    // If you need an HTTP request with a content type: application/json, use the following:
+    //http.addHeader("Content-Type", "application/json");
+    //int httpResponseCode = http.POST("{\"value1\":\"19\",\"value2\":\"67\",\"value3\":\"78\"}");
+
+    if (httpResponseCode > 0) {
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+    }
+  }
+}
